@@ -9,6 +9,7 @@ const router = Router();
 
 const SALT_ROUNDS = 12;
 const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days in ms
+const COOKIE_SAME_SITE = process.env.NODE_ENV === "production" ? "none" : "lax";
 
 const generateToken = (userId: string): string => {
   const jwtSecret = process.env.JWT_SECRET;
@@ -22,7 +23,7 @@ const setTokenCookie = (res: Response, token: string) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: COOKIE_SAME_SITE,
     maxAge: COOKIE_MAX_AGE,
     path: "/",
   });
@@ -112,7 +113,7 @@ router.post("/logout", (_req: Request, res: Response) => {
   res.cookie("token", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: COOKIE_SAME_SITE,
     maxAge: 0,
     path: "/",
   });
