@@ -28,13 +28,13 @@ export async function retrieveChunks(query: string, noteId: string): Promise<Ret
   const qdrant = new QdrantClient({ url: QDRANT_URL, apiKey: process.env.QDRANT_API_KEY });
   const collectionName = `note-${noteId}`;
 
-  const searchResult = await qdrant.search(collectionName, {
-    vector: queryVector,
+  const searchResult = await qdrant.query(collectionName, {
+    query: queryVector,
     limit: TOP_K,
     with_payload: true,
   });
 
-  return searchResult.map((hit) => ({
+  return searchResult.points.map((hit) => ({
     text: hit.payload?.text as string,
     documentName: hit.payload?.documentName as string,
     chunkIndex: hit.payload?.chunkIndex as number,
