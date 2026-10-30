@@ -2,6 +2,8 @@
 
 RAGBook is a document assistant built with React, Express, MongoDB, Qdrant, and Groq. Users create notes, upload PDF or TXT documents, and ask questions grounded in those documents. It can also create a structured summary through a LangGraph workflow.
 
+**Live demo:** [RAGBook](https://ragbook-web.onrender.com)
+
 ## Features
 
 - Account registration and login using JWT cookies.
