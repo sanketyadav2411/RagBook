@@ -4,6 +4,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 make g+
 
 WORKDIR /app
 
+RUN mkdir -p /app/uploads
+
 COPY package*.json ./
 
 RUN npm install
