@@ -3,27 +3,13 @@ import path from "path";
 import pdfParse from "pdf-parse";
 import { QdrantClient } from "@qdrant/js-client-rest";
 import DocModel from "../../models/Document";
+import { embedTexts } from "../embeddings/cloudflare";
+import { collectionNameForNote } from "./collection";
 
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 200;
-const VECTOR_SIZE = 384; // all-MiniLM-L6-v2 output size
+const VECTOR_SIZE = 384; // Cloudflare bge-small-en-v1.5 output size
 const QDRANT_URL = process.env.QDRANT_URL || "http://qdrant:6333";
-
-async function getEmbedder() {
-  // Dynamic import to avoid top-level issues
-  const { pipeline } = await import("@xenova/transformers");
-  return pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
-}
-
-async function embedTexts(texts: string[]): Promise<number[][]> {
-  const extractor = await getEmbedder();
-  const embeddings: number[][] = [];
-  for (const text of texts) {
-    const output = await extractor(text, { pooling: "mean", normalize: true });
-    embeddings.push(Array.from(output.data as Float32Array));
-  }
-  return embeddings;
-}
 
 function chunkText(text: string): string[] {
   const chunks: string[] = [];
@@ -83,9 +69,6 @@ export async function ingestDocument(documentId: string): Promise<void> {
   }
 
   try {
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) throw new Error("GROQ_API_KEY not configured");
-
     doc.status = "processing";
     await doc.save();
 
@@ -102,12 +85,12 @@ export async function ingestDocument(documentId: string): Promise<void> {
 
     if (chunks.length === 0) throw new Error("No chunks could be created from the extracted text");
 
-    // Embed using local model (no external API key needed for embedding)
+    // Embed remotely to keep model memory and CPU use off the Render instance.
     const embeddings = await embedTexts(chunks);
     console.log(`Ingest: Embedded ${embeddings.length} chunks`);
 
     const qdrant = new QdrantClient({ url: QDRANT_URL, apiKey: process.env.QDRANT_API_KEY });
-    const collectionName = `note-${doc.noteId.toString()}`;
+    const collectionName = collectionNameForNote(doc.noteId.toString());
 
   try {
     const collections = await qdrant.getCollections();

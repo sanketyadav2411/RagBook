@@ -1,11 +1,12 @@
 import { QdrantClient } from "@qdrant/js-client-rest";
 import { runSummaryGraph } from "../langgraph/summaryGraph";
+import { collectionNameForNote } from "../rag/collection";
 
 const QDRANT_URL = process.env.QDRANT_URL || "http://qdrant:6333";
 
 async function getAllChunks(noteId: string): Promise<string> {
   const qdrant = new QdrantClient({ url: QDRANT_URL, apiKey: process.env.QDRANT_API_KEY });
-  const collectionName = `note-${noteId}`;
+  const collectionName = collectionNameForNote(noteId);
 
   const result = await qdrant.scroll(collectionName, {
     limit: 200,

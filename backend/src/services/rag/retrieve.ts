@@ -1,18 +1,13 @@
 import { QdrantClient } from "@qdrant/js-client-rest";
+import { embedTexts } from "../embeddings/cloudflare";
+import { collectionNameForNote } from "./collection";
 
-const VECTOR_SIZE = 384; // must match ingest.ts
 const QDRANT_URL = process.env.QDRANT_URL || "http://qdrant:6333";
 const TOP_K = 5;
 
-async function getEmbedder() {
-  const { pipeline } = await import("@xenova/transformers");
-  return pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
-}
-
 async function embedQuery(query: string): Promise<number[]> {
-  const extractor = await getEmbedder();
-  const output = await extractor(query, { pooling: "mean", normalize: true });
-  return Array.from(output.data as Float32Array);
+  const [embedding] = await embedTexts([query]);
+  return embedding;
 }
 
 export interface RetrievedChunk {
@@ -26,7 +21,7 @@ export async function retrieveChunks(query: string, noteId: string): Promise<Ret
   const queryVector = await embedQuery(query);
 
   const qdrant = new QdrantClient({ url: QDRANT_URL, apiKey: process.env.QDRANT_API_KEY });
-  const collectionName = `note-${noteId}`;
+  const collectionName = collectionNameForNote(noteId);
 
   const searchResult = await qdrant.query(collectionName, {
     query: queryVector,

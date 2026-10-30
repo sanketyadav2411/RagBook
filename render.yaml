@@ -19,11 +19,12 @@ services:
         generateValue: true
       - key: GROQ_API_KEY
         sync: false
+      - key: CLOUDFLARE_ACCOUNT_ID
+        sync: false
+      - key: CLOUDFLARE_API_TOKEN
+        sync: false
       - key: CLIENT_URL
-        fromService:
-          type: web
-          name: ragbook-web
-          envVarKey: RENDER_EXTERNAL_URL
+        value: https://ragbook-web.onrender.com
 
   - type: web
     name: ragbook-web
@@ -33,10 +34,7 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: ragbook-api
-          envVarKey: RENDER_EXTERNAL_URL
+        value: https://ragbook-api.onrender.com
     routes:
       - type: rewrite
         source: /*
